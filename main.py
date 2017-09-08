@@ -1,9 +1,15 @@
-import cv2
 import math
+import sys
+
+import cv2
 import numpy as np
 
 
 cap = cv2.VideoCapture(1)
+if not cap.isOpened():
+    print("Cannot acces device")
+    sys.exit()
+
 win1 = 'L'
 win2 = 'Filtered Contours'
 win3 = 'Circle Contours'
@@ -94,6 +100,10 @@ def callback(x):
 if __name__ == '__main__':
     while True:
         ret, frame = cap.read()
+
+        if not ret:
+            print("Cannot read Frame.")
+            sys.exit()
 
         l_selected = l_select(frame, show=True)
         contours = find_contours(l_selected, frame, show=True)
