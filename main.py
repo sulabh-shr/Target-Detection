@@ -4,8 +4,9 @@ import sys
 import cv2
 import numpy as np
 
+VIDEO_SOURCE_INPUT = 0
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(VIDEO_SOURCE_INPUT)
 if not cap.isOpened():
     print("Cannot acces device")
     sys.exit()
@@ -46,14 +47,7 @@ def l_select(img, show=False):
     :return: None
     """
 
-    # Adding trackbar
-    cv2.namedWindow("Trackbars")
-    # cv2.createTrackbar("H_low", "Trackbars", 0, 255, callback)
-    # cv2.createTrackbar("H_high", "Trackbars", 0, 255, callback)
-    # cv2.createTrackbar("S_low", "Trackbars", 0, 255, callback)
-    # cv2.createTrackbar("S_high", "Trackbars", 0, 255, callback)
-    cv2.createTrackbar("L_low", "Trackbars", 190, 255, callback)
-    cv2.createTrackbar("L_high", "Trackbars", 255, 255, callback)
+
 
     l_thresh[0] = cv2.getTrackbarPos("L_low", "Trackbars")
     l_thresh[1] = cv2.getTrackbarPos("L_high", "Trackbars")
@@ -98,6 +92,15 @@ def callback(x):
 
 
 if __name__ == '__main__':
+    # Adding trackbar
+    cv2.namedWindow("Trackbars")
+    # cv2.createTrackbar("H_low", "Trackbars", 0, 255, callback)
+    # cv2.createTrackbar("H_high", "Trackbars", 0, 255, callback)
+    # cv2.createTrackbar("S_low", "Trackbars", 0, 255, callback)
+    # cv2.createTrackbar("S_high", "Trackbars", 0, 255, callback)
+    cv2.createTrackbar("L_low", "Trackbars", 190, 255, callback)
+    cv2.createTrackbar("L_high", "Trackbars", 255, 255, callback)
+
     while True:
         ret, frame = cap.read()
 
