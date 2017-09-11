@@ -1,22 +1,26 @@
 import math
-import sys
-
-import cv2
 import numpy as np
 
-VIDEO_SOURCE_INPUT = 0
+import cv2
 
-cap = cv2.VideoCapture(VIDEO_SOURCE_INPUT)
-if not cap.isOpened():
-    print("Cannot acces device")
-    sys.exit()
+from WebcamVideoStream import WebcamVideoStream
+
+VIDEO_SOURCE_INPUT = 1
+
+# cap = cv2.VideoCapture(VIDEO_SOURCE_INPUT)
+# if not cap.isOpened():
+#     print("Cannot acces device")
+#     sys.exit()
+
+camera = WebcamVideoStream(src=VIDEO_SOURCE_INPUT).start()
+
 
 win1 = 'L'
 win2 = 'Filtered Contours'
 win3 = 'Circle Contours'
 win_y = 300
-win_x = win_y*4//3
-pos_xoffset = int(win_x*0.3)
+win_x = win_y * 4 // 3
+pos_xoffset = int(win_x * 0.3)
 pos_yoffset = 50
 l_thresh = [190, 255]
 round_check = 0.82
@@ -46,8 +50,6 @@ def l_select(img, show=False):
     :param show: flag to display the window or not
     :return: None
     """
-
-
 
     l_thresh[0] = cv2.getTrackbarPos("L_low", "Trackbars")
     l_thresh[1] = cv2.getTrackbarPos("L_high", "Trackbars")
@@ -102,11 +104,13 @@ if __name__ == '__main__':
     cv2.createTrackbar("L_high", "Trackbars", 255, 255, callback)
 
     while True:
-        ret, frame = cap.read()
+        # ret, frame = cap.read()
+        #
+        # if not ret:
+        #     print("Cannot read Frame.")
+        #     sys.exit()
 
-        if not ret:
-            print("Cannot read Frame.")
-            sys.exit()
+        frame = camera.read()
 
         l_selected = l_select(frame, show=True)
         contours = find_contours(l_selected, frame, show=True)
@@ -119,7 +123,7 @@ if __name__ == '__main__':
             print('area', area)
             length = cv2.arcLength(c, closed=True)
             print('length', length)
-            roundness = 4*math.pi*area/length**2
+            roundness = 4 * math.pi * area / length ** 2
             print('roundness', roundness)
             if roundness >= round_check:
                 print('true')
@@ -142,5 +146,6 @@ if __name__ == '__main__':
         if (key & 0xFF == ord('q')) | (key & 0xFF == 27):
             break
 
-    cap.release()
+    # cap.release()
+    camera.stop()
     cv2.destroyAllWindows()
