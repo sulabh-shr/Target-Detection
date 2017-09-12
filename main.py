@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 
 from WebcamVideoStream import WebcamVideoStream
+from detection import group_circle
 
 VIDEO_SOURCE_INPUT = 1
 
@@ -16,8 +17,9 @@ camera = WebcamVideoStream(src=VIDEO_SOURCE_INPUT).start()
 
 
 win1 = 'L'
-win2 = 'Filtered Contours'
+win2 = 'Points Filtered Contours'
 win3 = 'Circle Contours'
+win4 = 'Grouped Circles'
 win_y = 300
 win_x = win_y * 4 // 3
 pos_xoffset = int(win_x * 0.3)
@@ -66,18 +68,19 @@ def l_select(img, show=False):
     return l_selected
 
 
-def find_contours(img, frame, show=False):
+def find_contours(img, frame, points= 50, show=False):
     """
 
     :param img: processed input image
     :param frame: original frame
+    :param points: minimum points to approve as required contour
     :param show: flag to display the window or not
-    :return: list of contours
+    :return: list of contours with area greater than a specified value
     """
     im2, contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     filtered = []
     for i in range(len(contours)):
-        if len(contours[i]) > 50:
+        if len(contours[i]) > points:
             filtered.append(contours[i])
 
     if show:
@@ -112,36 +115,64 @@ if __name__ == '__main__':
 
         frame = camera.read()
 
-        l_selected = l_select(frame, show=True)
-        contours = find_contours(l_selected, frame, show=True)
+        l_selected = l_select(frame, show=False)
+        contours = find_contours(l_selected, frame, points=50, show=True)
         # find_contours(l_selected, frame, show=True)
-        Contours = []
+        contours_details = []
         circles = []
 
         for c in contours:
             area = cv2.contourArea(c)
-            print('area', area)
             length = cv2.arcLength(c, closed=True)
-            print('length', length)
             roundness = 4 * math.pi * area / length ** 2
-            print('roundness', roundness)
+            # print('\narea:', area)
+            # print('length:', length)
+            # print('roundness:', roundness)
+
             if roundness >= round_check:
-                print('true')
-                contour = {
+                print('\n\tCircle found...')
+
+                moments = cv2.moments(c)
+                cx = int(moments['m10'] / moments['m00'])
+                cy = int(moments['m01'] / moments['m00'])
+
+                # print('moments:', moments)
+                # print('cx:', cx)
+                # print('cy:', cy)
+
+                contour = {             # dictionary of a contour with property
                     'c': c,
                     'area': area,
-                    'roundness': roundness
+                    'roundness': roundness,
+                    'moments': moments,
+                    'cx': cx,
+                    'cy': cy
                 }
-                Contours.append(contour)
-                circles.append(c)
-            else:
-                print('false')
+                contours_details.append(contour)    # array of dictionaries of contours with properties
+                circles.append(c)           # array of contours for drawing
+
+                groups = group_circle(contours_details, 10)
+                grouped_circles_image = np.copy(frame)
+                centers = list(groups.keys())
+
+                try:
+                    cv2.drawContours(grouped_circles_image, groups[centers[0]], -1, (255, 0, 0), 3)
+                except:
+                    pass
+
+                try:
+                    cv2.drawContours(grouped_circles_image, groups[centers[1]], -1, (0, 255, 0), 3)
+                except:
+                    pass
+                show_video(grouped_circles_image, win4)
 
         circle_image = np.copy(frame)
         cv2.drawContours(circle_image, circles, -1, (0, 0, 255), 3)
         show_video(circle_image, win3, win_x, win_y)
         # show_video(circle_image, win3, win_x, win_y, pos_x=win_x+pos_xoffset, pos_y=win_y
         # +pos_yoffset)
+
+
         key = cv2.waitKey(1)
         if (key & 0xFF == ord('q')) | (key & 0xFF == 27):
             break
