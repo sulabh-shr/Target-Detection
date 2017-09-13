@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import random
 
 import cv2
 
@@ -14,7 +15,6 @@ VIDEO_SOURCE_INPUT = 1
 #     sys.exit()
 
 camera = WebcamVideoStream(src=VIDEO_SOURCE_INPUT).start()
-
 
 win1 = 'L'
 win2 = 'Points Filtered Contours'
@@ -115,11 +115,13 @@ if __name__ == '__main__':
 
         frame = camera.read()
 
-        l_selected = l_select(frame, show=False)
+        l_selected = l_select(frame, show=True)
         contours = find_contours(l_selected, frame, points=50, show=True)
         # find_contours(l_selected, frame, show=True)
-        contours_details = []
-        circles = []
+        circles_details = []       # list of dictionary of contours with properties
+        circles = []                # list of circle contours
+
+        grouped_circles_image = np.copy(frame)
 
         for c in contours:
             area = cv2.contourArea(c)
@@ -130,7 +132,7 @@ if __name__ == '__main__':
             # print('roundness:', roundness)
 
             if roundness >= round_check:
-                print('\n\tCircle found...')
+                # print('\n\tCircle found...')
 
                 moments = cv2.moments(c)
                 cx = int(moments['m10'] / moments['m00'])
@@ -148,29 +150,22 @@ if __name__ == '__main__':
                     'cx': cx,
                     'cy': cy
                 }
-                contours_details.append(contour)    # array of dictionaries of contours with properties
+                circles_details.append(contour)    # array of dictionaries of contours with properties
                 circles.append(c)           # array of contours for drawing
 
-                groups = group_circle(contours_details, 10)
-                grouped_circles_image = np.copy(frame)
+                groups = group_circle(circles_details, 20, verbose=False)
                 centers = list(groups.keys())
+                for center in groups:
+                    color = (center[0], center[1], random.randint(0, 255))
+                    cv2.drawContours(grouped_circles_image, groups[center], -1, color, 3)
 
-                try:
-                    cv2.drawContours(grouped_circles_image, groups[centers[0]], -1, (255, 0, 0), 3)
-                except:
-                    pass
+        show_video(grouped_circles_image, win4)
 
-                try:
-                    cv2.drawContours(grouped_circles_image, groups[centers[1]], -1, (0, 255, 0), 3)
-                except:
-                    pass
-                show_video(grouped_circles_image, win4)
-
-        circle_image = np.copy(frame)
-        cv2.drawContours(circle_image, circles, -1, (0, 0, 255), 3)
-        show_video(circle_image, win3, win_x, win_y)
-        # show_video(circle_image, win3, win_x, win_y, pos_x=win_x+pos_xoffset, pos_y=win_y
-        # +pos_yoffset)
+        # circle_image = np.copy(frame)
+        # cv2.drawContours(circle_image, circles, -1, (0, 0, 255), 3)
+        # show_video(circle_image, win3, win_x, win_y)
+        ## show_video(circle_image, win3, win_x, win_y, pos_x=win_x+pos_xoffset, pos_y=win_y
+        ## +pos_yoffset)
 
 
         key = cv2.waitKey(1)
