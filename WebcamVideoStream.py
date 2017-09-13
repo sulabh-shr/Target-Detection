@@ -8,7 +8,7 @@ class WebcamVideoStream:
     def __init__(self, src=0):
         self.stream = cv2.VideoCapture(src)
         if not self.stream.isOpened():
-            print("Cannot Access Device :" + src)
+            print("Cannot Access Device :", src)
             sys.exit()
 
         self.grabbed, self.frame = self.stream.read()

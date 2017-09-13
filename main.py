@@ -142,9 +142,12 @@ if __name__ == '__main__':
         show_video(circle_image, win3, win_x, win_y)
         # show_video(circle_image, win3, win_x, win_y, pos_x=win_x+pos_xoffset, pos_y=win_y
         # +pos_yoffset)
-        key = cv2.waitKey(1)
-        if (key & 0xFF == ord('q')) | (key & 0xFF == 27):
+        key = cv2.waitKey(1) & 0xFF
+        if (key == ord('q')) | (key & 0xFF == 27):
             break
+        elif key == ord('c'):
+            cv2.imwrite("persp.jpg", frame)
+
 
     # cap.release()
     camera.stop()
