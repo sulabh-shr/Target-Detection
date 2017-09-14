@@ -1,31 +1,28 @@
 import math
 import numpy as np
 import random
-
 import cv2
 
 from WebcamVideoStream import WebcamVideoStream
 from detection import group_circle
 
 VIDEO_SOURCE_INPUT = 1
+WIN1 = 'L'
+WIN2 = 'Points Filtered Contours'
+WIN3 = 'Circle Contours'
+WIN4 = 'Grouped Circles'
+WIN_Y = 300
+WIN_X = WIN_Y * 4 // 3
+POS_X_OFFSET = int(WIN_X * 0.3)
+POS_Y_OFFSET = 50
+MIN_CONTOUR_POINTS = 50
+ROUND_CHECK = 0.82
+GROUPING_DISTANCE = 20
 
-# cap = cv2.VideoCapture(VIDEO_SOURCE_INPUT)
-# if not cap.isOpened():
-#     print("Cannot acces device")
-#     sys.exit()
+l_thresh = [190, 255]
+
 
 camera = WebcamVideoStream(src=VIDEO_SOURCE_INPUT).start()
-
-win1 = 'L'
-win2 = 'Points Filtered Contours'
-win3 = 'Circle Contours'
-win4 = 'Grouped Circles'
-win_y = 300
-win_x = win_y * 4 // 3
-pos_xoffset = int(win_x * 0.3)
-pos_yoffset = 50
-l_thresh = [190, 255]
-round_check = 0.82
 
 
 def show_video(frame, name, x_size=712, y_size=400, pos_x=None, pos_y=None):
@@ -39,10 +36,11 @@ def show_video(frame, name, x_size=712, y_size=400, pos_x=None, pos_y=None):
     :param pos_x: window starting x pos
     :param pos_y: window starting y pos
     """
+
     cv2.namedWindow(name, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(name, x_size, y_size)
     if pos_x is not None:
-        cv2.moveWindow(win2, x=pos_x, y=pos_y)
+        cv2.moveWindow(WIN2, x=pos_x, y=pos_y)
     cv2.imshow(name, frame)
 
 
@@ -62,14 +60,16 @@ def l_select(img, show=False):
     l_selected[(l > l_thresh[0]) & (l <= l_thresh[1])] = 255  # selected pixels 1
 
     if show:
-        show_video(l_selected, win1, win_x, win_y)
-        # show_video(l_selected, win1, win_x, win_y, 0, 0)
+        show_video(l_selected, WIN1, WIN_X, WIN_Y)
+        # show_video(l_selected, WIN1, WIN_X, WIN_Y, 0, 0)
 
     return l_selected
 
 
-def find_contours(img, frame, points= 50, show=False):
+def find_contours(img, frame, points=50, show=False):
     """
+    It is used to find all contours in an image frame
+    which have number of points more than specified minimum value
 
     :param img: processed input image
     :param frame: original frame
@@ -77,6 +77,7 @@ def find_contours(img, frame, points= 50, show=False):
     :param show: flag to display the window or not
     :return: list of contours with area greater than a specified value
     """
+
     im2, contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     filtered = []
     for i in range(len(contours)):
@@ -86,8 +87,8 @@ def find_contours(img, frame, points= 50, show=False):
     if show:
         frame_copy = np.copy(frame)
         cv2.drawContours(frame_copy, filtered, -1, (0, 0, 255), 3)
-        show_video(frame_copy, win2, win_x, win_y)
-        # show_video(frame_copy, win2, win_x, win_y, pos_x=win_x+pos_xoffset, pos_y=0)
+        show_video(frame_copy, WIN2, WIN_X, WIN_Y)
+        # show_video(frame_copy, WIN2, WIN_X, WIN_Y, pos_x=WIN_X+POS_X_OFFSET, pos_y=0)
 
     return filtered
 
@@ -107,17 +108,11 @@ if __name__ == '__main__':
     cv2.createTrackbar("L_high", "Trackbars", 255, 255, callback)
 
     while True:
-        # ret, frame = cap.read()
-        #
-        # if not ret:
-        #     print("Cannot read Frame.")
-        #     sys.exit()
-
         frame = camera.read()
 
         l_selected = l_select(frame, show=True)
-        contours = find_contours(l_selected, frame, points=50, show=True)
-        # find_contours(l_selected, frame, show=True)
+        contours = find_contours(l_selected, frame, points=MIN_CONTOUR_POINTS, show=True)
+
         circles_details = []       # list of dictionary of contours with properties
         circles = []                # list of circle contours
 
@@ -131,7 +126,7 @@ if __name__ == '__main__':
             # print('length:', length)
             # print('roundness:', roundness)
 
-            if roundness >= round_check:
+            if roundness >= ROUND_CHECK:
                 # print('\n\tCircle found...')
 
                 moments = cv2.moments(c)
@@ -153,19 +148,20 @@ if __name__ == '__main__':
                 circles_details.append(contour)    # array of dictionaries of contours with properties
                 circles.append(c)           # array of contours for drawing
 
-                groups = group_circle(circles_details, 20, verbose=False)
-                centers = list(groups.keys())
-                for center in groups:
-                    color = (center[0], center[1], random.randint(0, 255))
-                    cv2.drawContours(grouped_circles_image, groups[center], -1, color, 3)
+        if len(circles_details) > 0:
+            groups = group_circle(circles_details, tolerance=GROUPING_DISTANCE, verbose=False)
+            centers = list(groups.keys())
+            for center in groups:
+                color = (center[0], center[1], random.randint(0, 255))
+                cv2.drawContours(grouped_circles_image, groups[center], -1, color, 3)
 
-        show_video(grouped_circles_image, win4)
+            show_video(grouped_circles_image, WIN4)
 
         # circle_image = np.copy(frame)
         # cv2.drawContours(circle_image, circles, -1, (0, 0, 255), 3)
-        # show_video(circle_image, win3, win_x, win_y)
-        ## show_video(circle_image, win3, win_x, win_y, pos_x=win_x+pos_xoffset, pos_y=win_y
-        ## +pos_yoffset)
+        # show_video(circle_image, WIN3, WIN_X, WIN_Y)
+        ## show_video(circle_image, WIN3, WIN_X, WIN_Y, pos_x=WIN_X+POS_X_OFFSET, pos_y=WIN_Y
+        ## +POS_Y_OFFSET)
 
 
         key = cv2.waitKey(1)

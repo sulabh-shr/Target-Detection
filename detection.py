@@ -1,3 +1,44 @@
+import numpy as np
+import cv2
+import math
+
+
+def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
+    grouped_circles_image = np.copy(frame)
+    circles_details = []
+    circles = []
+
+    for c in contours:
+        area = cv2.contourArea(c)
+        length = cv2.arcLength(c, closed=True)
+        roundness = 4 * math.pi * area / length ** 2
+        # print('\narea:', area)
+        # print('length:', length)
+        # print('roundness:', roundness)
+
+        if roundness >= round_check:
+            # print('\n\tCircle found...')
+
+            moments = cv2.moments(c)
+            cx = int(moments['m10'] / moments['m00'])
+            cy = int(moments['m01'] / moments['m00'])
+
+            # print('moments:', moments)
+            # print('cx:', cx)
+            # print('cy:', cy)
+
+            contour = {  # dictionary of a contour with property
+                'c': c,
+                'area': area,
+                'roundness': roundness,
+                'moments': moments,
+                'cx': cx,
+                'cy': cy
+            }
+            circles_details.append(contour)  # array of dictionaries of contours with properties
+            circles.append(c)  # array of contours for drawing
+
+    return circles_details, circles
 
 
 def group_circle(circles_details, tolerance=20, verbose=False):
