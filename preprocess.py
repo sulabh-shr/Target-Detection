@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from show_video import show_video
-from parameters import l_thresh, WIN_X, WIN_Y, POS_X_OFFSET, POS_Y_OFFSET
+from parameters import *
 
 
 def l_select(img, show=False):
@@ -15,8 +15,8 @@ def l_select(img, show=False):
     """
 
     # Getting minimum and maximum threshold values from trackbar
-    l_thresh[0] = cv2.getTrackbarPos("L_low", "Trackbars")
-    l_thresh[1] = cv2.getTrackbarPos("L_high", "Trackbars")
+    l_thresh[0] = cv2.getTrackbarPos("L_low", WIN_TRACK_BAR)
+    l_thresh[1] = cv2.getTrackbarPos("L_high", WIN_TRACK_BAR)
 
     # Converting to HLS space
     hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)

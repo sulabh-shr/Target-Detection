@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import math
+import random
 
 from show_video import show_video
 from parameters import *
@@ -36,48 +37,86 @@ def find_contours(img, frame, points=50, show=False):
 
 
 def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
-    circles_details = []
+    """
+    It is used to return only those contours which have
+    roundness greater a minimum specified value
 
-    circle_image = np.copy(frame)
-    circles = []
+    :param contours: list of contours
+    :param frame: original frame
+    :param round_check: minimum roundness to certify as a circle
+    :param show: flag to the video frame
+    :param verbose: flag to print details
+    :return: list of contours certified as circles
+    """
 
-    for c in contours:
-        area = cv2.contourArea(c)
-        length = cv2.arcLength(c, closed=True)
-        roundness = 4 * math.pi * area / length ** 2
-        # print('\narea:', area)
-        # print('length:', length)
-        # print('roundness:', roundness)
+    if not verbose:
+        circles_details = []
+        circle_image = np.copy(frame)
+        circles = []
 
-        if roundness >= round_check:
-            # print('\n\tCircle found...')
+        for c in contours:
+            area = cv2.contourArea(c)
+            length = cv2.arcLength(c, closed=True)
+            roundness = 4 * math.pi * area / length ** 2
 
-            moments = cv2.moments(c)
-            cx = int(moments['m10'] / moments['m00'])
-            cy = int(moments['m01'] / moments['m00'])
+            if roundness >= round_check:
+                moments = cv2.moments(c)
+                cx = int(moments['m10'] / moments['m00'])
+                cy = int(moments['m01'] / moments['m00'])
 
-            # print('moments:', moments)
-            # print('cx:', cx)
-            # print('cy:', cy)
+                contour = {  # dictionary of a contour with property
+                    'c': c,
+                    'area': area,
+                    'roundness': roundness,
+                    'moments': moments,
+                    'cx': cx,
+                    'cy': cy
+                }
+                circles_details.append(contour)  # array of dictionaries of contours with properties
+                circles.append(c)  # array of contours for drawing
+    else:
+        circles_details = []
+        circle_image = np.copy(frame)
+        circles = []
 
-            contour = {  # dictionary of a contour with property
-                'c': c,
-                'area': area,
-                'roundness': roundness,
-                'moments': moments,
-                'cx': cx,
-                'cy': cy
-            }
-            circles_details.append(contour)  # array of dictionaries of contours with properties
-            circles.append(c)  # array of contours for drawing
+        for c in contours:
+            area = cv2.contourArea(c)
+            length = cv2.arcLength(c, closed=True)
+            roundness = 4 * math.pi * area / length ** 2
+            print('\narea:', area)
+            print('length:', length)
+            print('roundness:', roundness)
+
+            if roundness >= round_check:
+                print('\n\tCircle found...')
+
+                moments = cv2.moments(c)
+                cx = int(moments['m10'] / moments['m00'])
+                cy = int(moments['m01'] / moments['m00'])
+
+                print('moments:', moments)
+                print('cx:', cx)
+                print('cy:', cy)
+
+                contour = {  # dictionary of a contour with property
+                    'c': c,
+                    'area': area,
+                    'roundness': roundness,
+                    'moments': moments,
+                    'cx': cx,
+                    'cy': cy
+                }
+                circles_details.append(contour)  # array of dictionaries of contours with properties
+                circles.append(c)  # array of contours for drawing
+
     if show:
         cv2.drawContours(circle_image, circles, -1, (0, 0, 255), 3)
-        show_video(circle_image, 'All Circles Found', WIN_X, WIN_Y)
+        show_video(circle_image, 'All Found circles', WIN_X, WIN_Y, 0, WIN_Y+POS_Y_OFFSET)
 
     return circles_details
 
 
-def group_circle(circles_details, tolerance=20, verbose=False):
+def group_circle(circles_details, frame, tolerance=20, show=False, verbose=False):
     if not verbose:
         groups = {(circles_details[0]['cx'], circles_details[0]['cy']): [circles_details[0]['c']]}
 
@@ -126,6 +165,13 @@ def group_circle(circles_details, tolerance=20, verbose=False):
         for key in groups:
             print('Center:', key, '\n\tn_circles:', len(groups[key]))
 
+    if show:
+        grouped_circles_image = np.copy(frame)
+        for center in groups:
+            color = (center[0], center[1], random.randint(0, 255))
+            cv2.drawContours(grouped_circles_image, groups[center], -1, color, 3)
+        show_video(grouped_circles_image, 'Grouped Circles', WIN_X, WIN_Y, WIN_X+POS_X_OFFSET, WIN_Y+POS_Y_OFFSET)
+
     return groups
 
 
@@ -140,7 +186,3 @@ def find_target(circles_details, ratio):
     sorted_details = sorted(circles_details, key=lambda k: k['area'])
     for c in sorted_details:
         pass
-
-
-if __name__ == 'main':
-    pass
