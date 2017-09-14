@@ -1,0 +1,34 @@
+import cv2
+import numpy as np
+from show_video import show_video
+from parameters import l_thresh, WIN_X, WIN_Y, POS_X_OFFSET, POS_Y_OFFSET
+
+
+def l_select(img, show=False):
+    """
+    It is used to threshold the l channel of image
+    with the threshold value input from the trackbar
+
+    :param img: input image to check the l value
+    :param show: flag to display the window or not
+    :return: image with thresholded value of l channel
+    """
+
+    # Getting minimum and maximum threshold values from trackbar
+    l_thresh[0] = cv2.getTrackbarPos("L_low", "Trackbars")
+    l_thresh[1] = cv2.getTrackbarPos("L_high", "Trackbars")
+
+    # Converting to HLS space
+    hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
+
+    # Selecting L channel
+    l = hls[:, :, 1]
+
+    # Thresholding on the L channel
+    l_selected = np.zeros_like(l)  # all pixels 0
+    l_selected[(l > l_thresh[0]) & (l <= l_thresh[1])] = 255  # selected pixels 255
+
+    if show:
+        show_video(l_selected, 'L Thresholded', WIN_X, WIN_Y, WIN_X+POS_X_OFFSET, 0)
+
+    return l_selected

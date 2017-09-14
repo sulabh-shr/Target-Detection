@@ -2,10 +2,43 @@ import numpy as np
 import cv2
 import math
 
+from show_video import show_video
+from parameters import *
+
+
+def find_contours(img, frame, points=50, show=False):
+    """
+    It is used to find all contours in an image frame
+    which have number of points more than specified minimum value
+
+    :param img: processed input image
+    :param frame: original frame
+    :param points: minimum points to approve as required contour
+    :param show: flag to display the window or not
+    :return: list of contours with area greater than a specified value
+    """
+
+    # Finding all contours in the image
+    im2, contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Filtering contours based on their minimum points
+    filtered = []
+    for i in range(len(contours)):
+        if len(contours[i]) > points:
+            filtered.append(contours[i])
+
+    if show:
+        frame_copy = np.copy(frame)
+        cv2.drawContours(frame_copy, filtered, -1, (0, 0, 255), 3)
+        show_video(frame_copy, 'Points Filtered Contours', WIN_X, WIN_Y, 2*(WIN_X+POS_X_OFFSET), 0)
+
+    return filtered
+
 
 def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
-    grouped_circles_image = np.copy(frame)
     circles_details = []
+
+    circle_image = np.copy(frame)
     circles = []
 
     for c in contours:
@@ -37,8 +70,11 @@ def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
             }
             circles_details.append(contour)  # array of dictionaries of contours with properties
             circles.append(c)  # array of contours for drawing
+    if show:
+        cv2.drawContours(circle_image, circles, -1, (0, 0, 255), 3)
+        show_video(circle_image, 'All Circles Found', WIN_X, WIN_Y)
 
-    return circles_details, circles
+    return circles_details
 
 
 def group_circle(circles_details, tolerance=20, verbose=False):
