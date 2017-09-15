@@ -45,15 +45,16 @@ def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
     :param frame: original frame
     :param round_check: minimum roundness to certify as a circle
     :param show: flag to the video frame
-    :param verbose: flag to print details
+    :param verbose: flag to print details to the console
     :return: list of contours certified as circles
     """
 
     if not verbose:
-        circles_details = []
-        circle_image = np.copy(frame)
-        circles = []
+        circles_details = []        # list of dictionaries of circles with their properties
+        circle_image = np.copy(frame)   # copy of main frame to draw contours on
+        circles = []                # list of circles used to draw contours while showing
 
+        # Checking roundness of each contour
         for c in contours:
             area = cv2.contourArea(c)
             length = cv2.arcLength(c, closed=True)
@@ -64,7 +65,7 @@ def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
                 cx = int(moments['m10'] / moments['m00'])
                 cy = int(moments['m01'] / moments['m00'])
 
-                contour = {  # dictionary of a contour with property
+                contour = {  # dictionary of a circle with its properties
                     'c': c,
                     'area': area,
                     'roundness': roundness,
@@ -72,13 +73,15 @@ def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
                     'cx': cx,
                     'cy': cy
                 }
-                circles_details.append(contour)  # array of dictionaries of contours with properties
-                circles.append(c)  # array of contours for drawing
+                # Appending the found contour to the list of dictionaries and the list
+                circles_details.append(contour)
+                circles.append(c)
     else:
-        circles_details = []
-        circle_image = np.copy(frame)
-        circles = []
+        circles_details = []  # list of dictionaries of circles with their properties
+        circle_image = np.copy(frame)  # copy of main frame to draw contours on
+        circles = []  # list of circles used to draw contours while showing
 
+        # Checking roundness of each contour
         for c in contours:
             area = cv2.contourArea(c)
             length = cv2.arcLength(c, closed=True)
@@ -98,7 +101,7 @@ def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
                 print('cx:', cx)
                 print('cy:', cy)
 
-                contour = {  # dictionary of a contour with property
+                contour = {  # dictionary of a circle with its properties
                     'c': c,
                     'area': area,
                     'roundness': roundness,
@@ -106,8 +109,9 @@ def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
                     'cx': cx,
                     'cy': cy
                 }
-                circles_details.append(contour)  # array of dictionaries of contours with properties
-                circles.append(c)  # array of contours for drawing
+                # Appending the found contour to the list of dictionaries and the list
+                circles_details.append(contour)
+                circles.append(c)
 
     if show:
         cv2.drawContours(circle_image, circles, -1, (0, 0, 255), 3)
@@ -117,14 +121,40 @@ def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
 
 
 def group_circle(circles_details, frame, tolerance=20, show=False, verbose=False):
+    """
+    It is used to group circles which have centers within the tolerance limit.
+
+    :param circles_details: list of dictionaries of circles found
+    :param frame: original frame
+    :param tolerance: max distance in pixel value within which circles are said to have same center
+    :param show: flag to show the frame
+    :param verbose: flag to print details to the console
+    :return:
+    """
+
+    """
+        The variable groups is a dictionary with key as center of the group (x, y) 
+        and value as list of the contours having that same center.
+        It is used to draw contours when show flag is set.
+
+        The variable groups_details is a dictionary with key as center (x, y) and
+        value as list of dictionaries of the contours having that same center.
+        The dictionary of each contour contains its various properties as well.
+    """
     if not verbose:
-        groups = {(circles_details[0]['cx'], circles_details[0]['cy']): [circles_details[0]['c']]}
+        # Initializing the groups dictionary with 1st circle in the circle_details list
+        groups = {
+            (circles_details[0]['cx'], circles_details[0]['cy']): [circles_details[0]['c']]
+        }
+        groups_details = {
+            (circles_details[0]['cx'], circles_details[0]['cy']): [circles_details[0]]
+        }
 
         # Iterating over each circle of the frame
         for contour in circles_details[1:]:
             # Matching a circle's center in already found centers (keys)
-            found = False  # value set True after common center found
-            found_key = None  # value of the center matched
+            found = False  # Value set True after common center found
+            found_key = None  # Value of the center matched
             for key in groups:
                 if abs(contour['cx'] - key[0]) <= tolerance and abs(contour['cy'] - key[1]) <= tolerance:
                     found = True
@@ -132,15 +162,24 @@ def group_circle(circles_details, frame, tolerance=20, show=False, verbose=False
                     break
 
             if found:
+                # Append to the matched key i.e. matched center
                 groups[found_key].append(contour['c'])
+                groups_details[found_key].append(contour)
             else:
+                # Create a new key with the unmatched center
                 groups[(contour['cx'], contour['cy'])] = [contour['c']]
+                groups_details[(contour['cx'], contour['cy'])] = [contour]
     else:
         print('\nINSIDE GROUP CIRCLE................')
+        # Initializing the groups dictionary with 1st circle in the circle_details list
         groups = {
             (circles_details[0]['cx'], circles_details[0]['cy']): [circles_details[0]['c']]
         }
+        groups_details = {
+            (circles_details[0]['cx'], circles_details[0]['cy']): [circles_details[0]]
+        }
 
+        # Iterating over each circle of the frame
         for contour in circles_details[1:]:
             # Match the center in already found centers (keys)
             print('Matching center:', contour['cx'], contour['cy'])
@@ -157,9 +196,13 @@ def group_circle(circles_details, frame, tolerance=20, show=False, verbose=False
                     print('Not found, adding the key')
 
             if found:
+                # Append to the matched key i.e. matched center
                 groups[found_key].append(contour['c'])
+                groups_details[found_key].append(contour)
             else:
+                # Create a new key with the unmatched center
                 groups[(contour['cx'], contour['cy'])] = [contour['c']]
+                groups_details[(contour['cx'], contour['cy'])] = [contour]
 
         print('\nNumber of circle groups found:', len(groups))
         for key in groups:
@@ -172,17 +215,54 @@ def group_circle(circles_details, frame, tolerance=20, show=False, verbose=False
             cv2.drawContours(grouped_circles_image, groups[center], -1, color, 3)
         show_video(grouped_circles_image, 'Grouped Circles', WIN_X, WIN_Y, WIN_X+POS_X_OFFSET, WIN_Y+POS_Y_OFFSET)
 
-    return groups
+    return groups_details
 
 
-def find_target(circles_details, ratio):
+def find_target(groups_details, min_circles, max_circles, target_ratios, show=False):
     """
     It is used to find the exact target based on ratio of radius of contours
 
-    :param circles_details: a list of dictionary of contours and it's various details
-    :param ratio: the ratio to search for
+    :param groups_details: a list of dictionary of contours and it's various details
+    :param target_ratios: the ratio to search for
     :return:
     """
-    sorted_details = sorted(circles_details, key=lambda k: k['area'])
-    for c in sorted_details:
-        pass
+
+    target = []
+
+    # Iterating over each group of contours in the list
+    for center in groups_details:
+        detected = True
+        current_details = groups_details[center]        # List of contours of iterating group with their details
+
+        # Checking if number of circles is greater than predefined value
+        print("Number of circles in group: ", len(current_details))
+        if min_circles <= len(current_details) <= max_circles:
+
+            # Sorting the contours based on the increasing order of their area
+            sorted_details = sorted(current_details, key=lambda k: k['area'])
+            ratios = []     # List to add the ratios
+
+            # Calculating the ratios of radii wrt inner most circle
+            for contour in sorted_details[1:]:
+                ratios.append((contour['area']/sorted_details[0]['area'])**(1/2))
+
+            print("Found ratio: ", ratios)
+            # Checking the ratio against pre-defined target RATIO
+            for index in range(len(ratios)):
+                if abs(ratios[index] - target_ratios[index]) > CENTER_TOLERANCE:
+                    detected = False
+                    print("Not a target\n")
+                    break
+
+            if detected:
+                print("Detected\n")
+                target.append(groups_details[center])
+
+    if len(target) > 1:
+        # TODO: Choose the best circle based on their M.S.E.
+        print("Found multiple targets: ", len(target))
+        target.sort(key=len)
+        for t in target:
+            print(len(t))
+
+    print(".......")

@@ -7,14 +7,14 @@ from parameters import *
 def l_select(img, show=False):
     """
     It is used to threshold the l channel of image
-    with the threshold value input from the trackbar
+    with the threshold value input from the track bar
 
     :param img: input image to check the l value
     :param show: flag to display the window or not
     :return: image with thresholded value of l channel
     """
 
-    # Getting minimum and maximum threshold values from trackbar
+    # Getting minimum and maximum threshold values from track bars
     l_thresh[0] = cv2.getTrackbarPos("L_low", WIN_TRACK_BAR)
     l_thresh[1] = cv2.getTrackbarPos("L_high", WIN_TRACK_BAR)
 

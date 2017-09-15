@@ -1,11 +1,10 @@
 import numpy as np
-import random
 import cv2
 
 
 from WebcamVideoStream import WebcamVideoStream
 from preprocess import l_select
-from detection import find_contours, circle_check, group_circle
+from detection import find_contours, circle_check, group_circle, find_target
 
 from parameters import *
 
@@ -15,6 +14,7 @@ def callback(x):
 
 
 if __name__ == '__main__':
+    print(RATIOS)
     # Initializing camera
     camera = WebcamVideoStream(src=VIDEO_SOURCE_INPUT).start()
 
@@ -39,7 +39,8 @@ if __name__ == '__main__':
         circles_details = circle_check(contours, frame, round_check=ROUND_CHECK, show=True, verbose=False)
         grouped_circles_image = np.copy(frame)
         if len(circles_details) > 0:    # If circle(s) found, group circles
-            groups = group_circle(circles_details, frame, tolerance=GROUPING_DISTANCE, show=True, verbose=False)
+            groups_details = group_circle(circles_details, frame, tolerance=GROUPING_DISTANCE, show=True, verbose=False)
+            find_target(groups_details, min_circles=MINIMUM_CIRCLES, max_circles=MAXIMUM_CIRCLES, target_ratios=RATIOS)
 
         # Waiting for exit key
         key = cv2.waitKey(1)
