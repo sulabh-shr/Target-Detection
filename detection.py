@@ -218,7 +218,7 @@ def group_circle(circles_details, frame, tolerance=20, show=False, verbose=False
     return groups_details
 
 
-def find_target(groups_details, min_circles, max_circles, target_ratios, show=False):
+def find_target(groups_details, min_circles, max_circles, target_ratios, show=False, verbose=False):
     """
     It is used to find the exact target based on ratio of radius of contours
 
@@ -231,8 +231,8 @@ def find_target(groups_details, min_circles, max_circles, target_ratios, show=Fa
 
     # Iterating over each group of contours in the list
     for center in groups_details:
-        detected = True
-        current_details = groups_details[center]        # List of contours of iterating group with their details
+        detected = True     # Flag that is set false if ratio don't match
+        current_details = groups_details[center]        # List of dictionary of contours of iterating group
 
         # Checking if number of circles is greater than predefined value
         print("Number of circles in group: ", len(current_details))
