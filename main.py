@@ -46,6 +46,8 @@ if __name__ == '__main__':
         key = cv2.waitKey(1)
         if (key & 0xFF == ord('q')) | (key & 0xFF == 27):
             break
+        elif key == ord('c'):
+            cv2.imwrite("persp.jpg", frame)
 
     camera.stop()
     cv2.destroyAllWindows()
