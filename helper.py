@@ -40,6 +40,24 @@ def perspective_transform_calc():
     return m_values, offset
 
 
+def root_mean_squared_error(calculated_values, actual_values):
+    """
+    Calculates the root mean squared error of the values.
+
+    :param calculated_values: list of calculated ratios
+    :param actual_values: list of actual ratios
+    :return: returns the mean squared error of the list
+    """
+
+    # assert len(calculated_values) == len(actual_values)
+    total = 0
+    for i in range(len(calculated_values)):
+        error = calculated_values[i]-actual_values[i]
+        total += error*error
+
+    return (total/len(calculated_values)) ** .5
+
+
 if __name__ == '__main__':
     perspective_transform, offset = perspective_transform_calc()
     M = perspective_transform['M']

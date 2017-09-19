@@ -5,6 +5,7 @@ import random
 
 from show_video import show_video
 from parameters import *
+from helper import root_mean_squared_error
 
 
 def find_contours(img, frame, points=50, show=False):
@@ -30,7 +31,7 @@ def find_contours(img, frame, points=50, show=False):
 
     if show:
         frame_copy = np.copy(frame)
-        cv2.drawContours(frame_copy, filtered, -1, (0, 0, 255), 3)
+        cv2.drawContours(frame_copy, filtered, -1, (0, 0, 255), 1)
         show_video(frame_copy, 'Points Filtered Contours', WIN_X, WIN_Y, 2*(WIN_X+POS_X_OFFSET), 0)
 
     return filtered
@@ -115,7 +116,7 @@ def circle_check(contours, frame, round_check=0.82, show=False, verbose=False):
 
     if show:
         cv2.drawContours(circle_image, circles, -1, (0, 0, 255), 3)
-        show_video(circle_image, 'All Found circles', WIN_X, WIN_Y, 0, WIN_Y+POS_Y_OFFSET)
+        show_video(circle_image, 'All Found circles', WIN_X, WIN_Y, 2* (WIN_X + POS_X_OFFSET), WIN_Y+POS_Y_OFFSET)
 
     return circles_details
 
@@ -213,21 +214,25 @@ def group_circle(circles_details, frame, tolerance=20, show=False, verbose=False
         for center in groups:
             color = (center[0], center[1], random.randint(0, 255))
             cv2.drawContours(grouped_circles_image, groups[center], -1, color, 3)
-        show_video(grouped_circles_image, 'Grouped Circles', WIN_X, WIN_Y, WIN_X+POS_X_OFFSET, WIN_Y+POS_Y_OFFSET)
+        show_video(grouped_circles_image, 'Grouped Circles',
+                   WIN_X, WIN_Y, WIN_X+POS_X_OFFSET, WIN_Y+POS_Y_OFFSET)
 
     return groups_details
 
 
-def find_target(groups_details, min_circles, max_circles, target_ratios, show=False, verbose=False):
+def find_target(groups_details, frame, min_circles, max_circles, target_ratios,
+                show=False):
     """
     It is used to find the exact target based on ratio of radius of contours
 
     :param groups_details: a list of dictionary of contours and it's various details
     :param target_ratios: the ratio to search for
+    :param show: flag to show the frame
     :return:
     """
 
-    target = []
+    targets = []
+    best_target = None
 
     # Iterating over each group of contours in the list
     for center in groups_details:
@@ -236,6 +241,7 @@ def find_target(groups_details, min_circles, max_circles, target_ratios, show=Fa
 
         # Checking if number of circles is greater than predefined value
         print("Number of circles in group: ", len(current_details))
+        # print(current_details)
         if min_circles <= len(current_details) <= max_circles:
 
             # Sorting the contours based on the increasing order of their area
@@ -246,7 +252,7 @@ def find_target(groups_details, min_circles, max_circles, target_ratios, show=Fa
             for contour in sorted_details[1:]:
                 ratios.append((contour['area']/sorted_details[0]['area'])**(1/2))
 
-            print("Found ratio: ", ratios)
+            # print("Found ratio: ", ratios)
             # Checking the ratio against pre-defined target RATIO
             for index in range(len(ratios)):
                 if abs(ratios[index] - target_ratios[index]) > CENTER_TOLERANCE:
@@ -256,13 +262,30 @@ def find_target(groups_details, min_circles, max_circles, target_ratios, show=Fa
 
             if detected:
                 print("Detected\n")
-                target.append(groups_details[center])
+                target = {'details': groups_details[center],
+                          'ratios': ratios}
+                # targets.append(groups_details[center])
+                targets.append(target)
+                best_target = targets[0]
 
-    if len(target) > 1:
+    if len(targets) > 1:
         # TODO: Choose the best circle based on their M.S.E.
-        print("Found multiple targets: ", len(target))
-        target.sort(key=len)
-        for t in target:
-            print(len(t))
+        rmse = []
+        for target in targets:
+            ratios = target['ratios']
+            rmse.append(root_mean_squared_error(ratios, target_ratios))
+
+        # print("Found multiple targets: ", len(targets), 'RMSE: ', len(rmse))
+        sorted_rmse = [i[0] for i in sorted(enumerate(rmse), key=lambda x: x[1])]
+        # print(rmse, sorted_rmse)
+        # print(targets[sorted_rmse[0]]['details'][0]['area'])
+        best_target = targets[sorted_rmse[0]]
+
+    if show:
+        if best_target:
+            best_platform = np.copy(frame)
+            for contour in best_target['details']:
+                cv2.drawContours(best_platform, contour['c'], -1, (255, 0, 0), 3)
+            show_video(best_platform, 'Best Platform', WIN_X, WIN_Y, 0, (WIN_Y+POS_Y_OFFSET))
 
     print(".......")

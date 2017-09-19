@@ -36,11 +36,24 @@ if __name__ == '__main__':
         # Processing the frame
         l_selected = l_select(frame, show=True)
         contours = find_contours(l_selected, frame, points=MIN_CONTOUR_POINTS, show=True)
-        circles_details = circle_check(contours, frame, round_check=ROUND_CHECK, show=True, verbose=False)
+        circles_details = circle_check(contours,
+                                       frame,
+                                       round_check=ROUND_CHECK,
+                                       show=True,
+                                       verbose=False)
         grouped_circles_image = np.copy(frame)
         if len(circles_details) > 0:    # If circle(s) found, group circles
-            groups_details = group_circle(circles_details, frame, tolerance=GROUPING_DISTANCE, show=True, verbose=False)
-            find_target(groups_details, min_circles=MINIMUM_CIRCLES, max_circles=MAXIMUM_CIRCLES, target_ratios=RATIOS)
+            groups_details = group_circle(circles_details,
+                                          frame,
+                                          tolerance=GROUPING_DISTANCE,
+                                          show=True,
+                                          verbose=False)
+            find_target(groups_details,
+                        frame,
+                        min_circles=MINIMUM_CIRCLES,
+                        max_circles=MAXIMUM_CIRCLES,
+                        target_ratios=RATIOS,
+                        show=True)
 
         # Waiting for exit key
         key = cv2.waitKey(1)

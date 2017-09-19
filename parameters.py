@@ -20,4 +20,4 @@ for r in RADII[1:]:
     RATIOS.append(r/RADII[0])
 MINIMUM_CIRCLES = 4         # Target should have at least this number of circles
 MAXIMUM_CIRCLES = 7         # Target having circle greater than this value is rejected
-CENTER_TOLERANCE = 0.2     # Tolerance of ratios
+CENTER_TOLERANCE = 2     # Tolerance of ratios

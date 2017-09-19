@@ -1,5 +1,6 @@
 import cv2
 
+
 def show_video(frame, name, x_size=712, y_size=400, pos_x=None, pos_y=None):
     """
     It is used to create and display a window for a particular frame.
