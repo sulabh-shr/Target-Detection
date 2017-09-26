@@ -58,6 +58,20 @@ def root_mean_squared_error(calculated_values, actual_values):
     return (total/len(calculated_values)) ** .5
 
 
+def find_height(best_target):
+    """
+
+    :param best_target: a dictionary containing info about the data on best target
+    best_target = {
+        'details': list of dictionary,
+        'ratios': list of ratios}
+    :return:
+    """
+    # TODO Find height
+
+    pass
+
+
 if __name__ == '__main__':
     perspective_transform, offset = perspective_transform_calc()
     M = perspective_transform['M']

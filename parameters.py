@@ -12,7 +12,9 @@ MIN_CONTOUR_POINTS = 25
 ROUND_CHECK = 0.75
 GROUPING_DISTANCE = 20
 
-l_thresh = [190, 255]
+H_thresh = [0, 180]   # [0, 180]
+L_thresh = [190, 255]   # [0, 255]
+S_thresh = [0, 255]   # [0, 255]
 
 RADII = [100, 150, 225, 350, 400, 575, 675]
 RATIOS = []
@@ -20,4 +22,4 @@ for r in RADII[1:]:
     RATIOS.append(r/RADII[0])
 MINIMUM_CIRCLES = 4         # Target should have at least this number of circles
 MAXIMUM_CIRCLES = 7         # Target having circle greater than this value is rejected
-CENTER_TOLERANCE = 2     # Tolerance of ratios
+CENTER_TOLERANCE = .4     # Tolerance of ratios

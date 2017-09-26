@@ -243,7 +243,7 @@ def find_target(groups_details, frame, min_circles, max_circles, target_ratios,
         print("Number of circles in group: ", len(current_details))
         # print(current_details)
         if min_circles <= len(current_details) <= max_circles:
-
+            # TODO Proper ratio comparision
             # Sorting the contours based on the increasing order of their area
             sorted_details = sorted(current_details, key=lambda k: k['area'])
             ratios = []     # List to add the ratios
@@ -269,7 +269,7 @@ def find_target(groups_details, frame, min_circles, max_circles, target_ratios,
                 best_target = targets[0]
 
     if len(targets) > 1:
-        # TODO: Choose the best circle based on their M.S.E.
+        # TODO detecting false groups too, need to check tolerance
         rmse = []
         for target in targets:
             ratios = target['ratios']
@@ -289,3 +289,4 @@ def find_target(groups_details, frame, min_circles, max_circles, target_ratios,
             show_video(best_platform, 'Best Platform', WIN_X, WIN_Y, 0, (WIN_Y+POS_Y_OFFSET))
 
     print(".......")
+    return best_target
